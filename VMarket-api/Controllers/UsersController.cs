@@ -35,6 +35,6 @@ public class UsersController : ControllerBase
         if (!result.Success)
             return BadRequest(new { Errors = result.Errors });
 
-        return Created($"api/users/{result.UserId}", new { Id = result.UserId });
+        return Created($"api/users/{result.Information}", new { Id = result.Information });
     }
 }
