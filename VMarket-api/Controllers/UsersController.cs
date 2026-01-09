@@ -15,11 +15,9 @@ public class UsersController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _db;
 
-    public UsersController(IUserService userService, UserManager<ApplicationUser> userManager, ApplicationDbContext db)
+    public UsersController(IUserService userService)
     {
         _userService = userService;
-        _userManager = userManager;
-        _db = db;
     }
 
     [HttpGet]
@@ -28,35 +26,15 @@ public class UsersController : ControllerBase
         return Ok(_userService.GetHelloWorld());
     }
     
+    
     [HttpPost("register")]
     public async Task<ActionResult> Register(RegisterDto dto)
     {
-        //TODO: mettre une partie dans les services !!!
-        
-        if (await _userManager.FindByEmailAsync(dto.Email) != null)
-            return BadRequest("Email déjà utilisé");
-        
-        if(dto.Password != dto.ConfirmPassword)
-            return BadRequest("Les mots de passe ne correspondent pas");
+        var result = await _userService.RegisterAsync(dto); // injecté déjà
 
-        var user = new ApplicationUser
-        {
-            UserName = dto.Username,
-            Email = dto.Email,
-            EmailConfirmed = true // TODO: temporaire sinon faut gérer la confirmation par email
-        };
+        if (!result.Success)
+            return BadRequest(new { Errors = result.Errors });
 
-        var result = await _userManager.CreateAsync(user, dto.Password);
-
-        if (result.Succeeded)
-        {
-            var wallet = new Wallet { UserId = user.Id };
-            _db.Wallets.Add(wallet);
-            await _db.SaveChangesAsync();
-
-            return Created($"api/users/{user.Id}", new { Id = user.Id, Username = user.UserName });
-        }
-
-        return BadRequest(new { Errors = result.Errors.Select(e => e.Description) });
+        return Created($"api/users/{result.UserId}", new { Id = result.UserId });
     }
 }
