@@ -30,11 +30,26 @@ public class UsersController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult> Register(RegisterDto dto)
     {
-        var result = await _userService.RegisterAsync(dto); // injecté déjà
+        var result = await _userService.RegisterAsync(dto);
 
         if (!result.Success)
             return BadRequest(new { Errors = result.Errors });
 
         return Created($"api/users/{result.Information}", new { Id = result.Information });
+    }
+    
+    [HttpPost("login")]
+    public async Task<ActionResult> Login(LoginDto dto)
+    {
+        var result = await _userService.LoginAsync(dto);
+        if (!result.Success)
+            return Unauthorized(new { Errors = result.Errors });
+
+        return Ok(new 
+        { 
+            token = result.Information, 
+            expiration = DateTime.UtcNow.AddMonths(1),
+            username = dto.Email 
+        });
     }
 }
