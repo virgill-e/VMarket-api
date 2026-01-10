@@ -62,7 +62,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// ORDRE CORRECT !
+app.UseStaticFiles();
 app.UseAuthentication();  // 1️⃣ IDENTIFY USER
 app.UseAuthorization();   // 2️⃣ CHECK PERMS
 

@@ -31,11 +31,17 @@ namespace UserApi.Controllers;
             return Created("api/groups", null);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult> GetGroup(string id)
+        
+        [HttpGet]
+        [Authorize]
+        public async Task<ActionResult> GetMyGroups()
         {
-            // Implementation for retrieving a group by id
-            return Ok();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _groupService.GetGroupsAsync(userId);
+            if (!result.Success)
+                return BadRequest(new { Errors = result.Errors });
+            
+            return Ok(result.Data);
         }
     }
     

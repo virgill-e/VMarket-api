@@ -46,7 +46,23 @@ public class GroupService: IGroupService
 
         return new(true , null , null);
     }
-    
+
+    public Task<ServiceResult> GetGroupsAsync(string userId)
+    {
+        var groups = _db.Groups
+            .Where(g => g.UserId == userId)
+            .Select(g => new GroupDto 
+            { 
+                Id = g.Id,
+                Name = g.Name,
+                ImagePath = g.ImagePath,
+                NumberOfMembers = 0
+            })
+            .ToList();
+        
+        return Task.FromResult(new ServiceResult(true, groups, null));
+    }
+
     private static bool IsValidImage(IFormFile file)
     {
         var allowed = new[] { "image/png", "image/jpeg", "image/gif" };

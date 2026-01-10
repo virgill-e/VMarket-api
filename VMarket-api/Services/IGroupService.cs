@@ -5,4 +5,6 @@ namespace VMarket_api.Services;
 public interface IGroupService
 {
     Task<ServiceResult> CreateGroupAsync(string userId, CreateGroupDto dto);
+    
+    Task<ServiceResult> GetGroupsAsync(string userId);
 }
