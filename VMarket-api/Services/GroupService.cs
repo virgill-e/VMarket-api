@@ -38,11 +38,22 @@ public class GroupService: IGroupService
         { 
             Name = dto.Name,
             ImagePath = $"images/groups/{fileName}",
-            UserId = userId 
+            OwnerId = userId 
         };
-
         _db.Groups.Add(group);
         await _db.SaveChangesAsync();
+        
+        var membership = new GroupMembership 
+        { 
+            GroupId = group.Id, 
+            UserId = userId, 
+            IsAdmin = true 
+        };
+
+        _db.GroupMemberships.Add(membership);
+        await _db.SaveChangesAsync();
+        
+        
 
         return new(true , null , null);
     }
@@ -50,13 +61,13 @@ public class GroupService: IGroupService
     public Task<ServiceResult> GetGroupsAsync(string userId)
     {
         var groups = _db.Groups
-            .Where(g => g.UserId == userId)
+            .Where(g => g.OwnerId == userId)
             .Select(g => new GroupDto 
             { 
                 Id = g.Id,
                 Name = g.Name,
                 ImagePath = g.ImagePath,
-                NumberOfMembers = 0
+                NumberOfMembers = g.Members.Count
             })
             .ToList();
         
