@@ -1,0 +1,55 @@
+using VMarket_api.Data;
+using VMarket_api.Models;
+using VMarket_api.Models.DTOs;
+
+namespace VMarket_api.Services;
+
+public class GroupService: IGroupService
+{
+    
+    private readonly ApplicationDbContext _db;
+    public GroupService(ApplicationDbContext db)
+    {
+        _db = db;
+    }
+    
+    public async Task<ServiceResult> CreateGroupAsync(string userId, CreateGroupDto dto)
+    {
+        // Valid image + size (ton code)
+        if (!IsValidImage(dto.Image))
+            return new(false, null, new[] { "Image invalide (PNG/JPEG/GIF seulement)" });
+
+        if (dto.Image.Length > 10 * 1024 * 1024)
+            return new(false, null, new[] { "Image trop lourde (max 10Mo)" });
+
+        var fileName = $"{Guid.NewGuid()}.{(dto.Image.ContentType.Split('/')?[1] ?? "png")}";
+        var path = Path.Combine("wwwroot", "images", "groups", fileName);
+
+        // Créer dossier si absent
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        // Sauvegarder fichier
+        using (var stream = new FileStream(path, FileMode.Create))
+        {
+            await dto.Image.CopyToAsync(stream);
+        }
+
+        var group = new Group 
+        { 
+            Name = dto.Name,
+            ImagePath = $"images/groups/{fileName}",
+            UserId = userId 
+        };
+
+        _db.Groups.Add(group);
+        await _db.SaveChangesAsync();
+
+        return new(true , null , null);
+    }
+    
+    private static bool IsValidImage(IFormFile file)
+    {
+        var allowed = new[] { "image/png", "image/jpeg", "image/gif" };
+        return allowed.Contains(file.ContentType.ToLower());
+    }
+}
