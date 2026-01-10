@@ -1,7 +1,8 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using VMarket_api.Data;
-using VMarket_api.Models;
 using VMarket_api.Models.DTOs;
 using VMarket_api.Services;
 
@@ -19,12 +20,6 @@ public class UsersController : ControllerBase
     {
         _userService = userService;
     }
-
-    [HttpGet]
-    public ActionResult<string> Get()
-    {
-        return Ok(_userService.GetHelloWorld());
-    }
     
     
     [HttpPost("register")]
@@ -35,7 +30,7 @@ public class UsersController : ControllerBase
         if (!result.Success)
             return BadRequest(new { Errors = result.Errors });
 
-        return Created($"api/users/{result.Information}", new { Id = result.Information });
+        return Created($"api/users/{result.Data}", new { Id = result.Data });
     }
     
     [HttpPost("login")]
@@ -47,9 +42,23 @@ public class UsersController : ControllerBase
 
         return Ok(new 
         { 
-            token = result.Information, 
+            token = result.Data, 
             expiration = DateTime.UtcNow.AddMonths(1),
             username = dto.Email 
         });
+    }
+    
+    
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult<UserProfileDto>> GetMe()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await _userService.GetCurrentUserAsync(userId);
+
+        if (!result.Success)
+            return Unauthorized(new { Errors = result.Errors });
+
+        return Ok(result.Data);
     }
 }

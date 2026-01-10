@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using VMarket_api.Data;
@@ -21,9 +22,6 @@ public class UserService : IUserService
         _db = db;
         _config = config;
     }
-    
-    public string GetHelloWorld() => "HELLO WORLD";
-    
     public async Task<ServiceResult> RegisterAsync(RegisterDto dto)
     {
         // Vérif email existant
@@ -44,11 +42,6 @@ public class UserService : IUserService
 
         if (result.Succeeded)
         {
-            // Créer wallet auto
-            var wallet = new Wallet { UserId = user.Id };
-            _db.Wallets.Add(wallet);
-            await _db.SaveChangesAsync();
-
             return new(true, user.UserName);
         }
 
@@ -81,5 +74,20 @@ public class UserService : IUserService
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
         return new ServiceResult(true, tokenString);
+    }
+
+
+    public async Task<ServiceResult> GetCurrentUserAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return new(false, null, new[] { "User non trouvé" });
+        
+        var profile = new UserProfileDto
+        {
+            Username = user.UserName ?? "",
+            Email = user.Email ?? "",
+        };
+
+        return new(true, profile);
     }
 }

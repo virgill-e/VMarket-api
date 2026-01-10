@@ -4,6 +4,7 @@ using VMarket_api.Data;
 using VMarket_api.Services;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,28 +12,25 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
-builder.Services
-    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+// IDENTITY POUR API (pas de cookies)
+builder.Services.AddIdentityCore<ApplicationUser>(options => 
     {
-        // options.Password.RequireNonAlphanumeric = false; // ex: custom rules
+        // tes règles password si besoin
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddControllers();
+builder.Services.AddScoped<IUserService, UserService>();
 
-
+// CONTROLLERS + SWAGGER
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<IUserService, UserService>();
-
-
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
+// JWT (CORRECT)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new()
         {
@@ -40,36 +38,34 @@ builder.Services.AddAuthentication("Bearer")
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"], // "https://localhost:5138"
-            ValidAudience = builder.Configuration["Jwt:Audience"], // même
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)) // clé secrète 256+
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
 
 var app = builder.Build();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
+// MIGRATE ICI (avant middleware)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
 }
 
-// Configure the HTTP request pipeline.
+// DEV TOOLS
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    //Swagger UI
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ORDRE CORRECT !
+app.UseAuthentication();  // 1️⃣ IDENTIFY USER
+app.UseAuthorization();   // 2️⃣ CHECK PERMS
 
-app.UseAuthorization();
+app.UseHttpsRedirection(); // APRÈS auth
 
 app.MapControllers();
 

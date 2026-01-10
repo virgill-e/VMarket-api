@@ -4,9 +4,9 @@ namespace VMarket_api.Services;
 
 public interface IUserService
 {
-    string GetHelloWorld();
     Task<ServiceResult> RegisterAsync(RegisterDto dto);
     
     Task<ServiceResult> LoginAsync(LoginDto dto);
     
+    Task<ServiceResult> GetCurrentUserAsync(string userId);
 }

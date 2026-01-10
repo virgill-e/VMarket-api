@@ -18,20 +18,4 @@ public class ApplicationDbContext
     {
         
     }
-    public DbSet<Wallet> Wallets { get; set; } = null!;
-
-    
-    protected override void OnModelCreating(ModelBuilder builder)
-    {
-        base.OnModelCreating(builder);
-
-        builder.Entity<Wallet>()
-            .HasOne(w => w.User)
-            .WithOne() // 1 seul wallet par user
-            .HasForeignKey<Wallet>(w => w.UserId)
-            .OnDelete(DeleteBehavior.Cascade); // supprime wallet si user supprimé
-
-        builder.Entity<Wallet>()
-            .HasIndex(w => w.UserId);
-    }
 }
