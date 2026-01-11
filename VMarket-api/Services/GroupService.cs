@@ -47,7 +47,8 @@ public class GroupService: IGroupService
         { 
             GroupId = group.Id, 
             UserId = userId, 
-            IsAdmin = true 
+            IsAdmin = true
+            
         };
 
         _db.GroupMemberships.Add(membership);
@@ -67,7 +68,11 @@ public class GroupService: IGroupService
                 Id = g.Id,
                 Name = g.Name,
                 ImagePath = g.ImagePath,
-                NumberOfMembers = g.Members.Count
+                NumberOfMembers = g.Members.Count,
+                Balance = g.Members
+                    .Where(m => m.UserId == userId)
+                    .Select(m => m.Balance)
+                    .FirstOrDefault()
             })
             .ToList();
         
@@ -86,7 +91,11 @@ public class GroupService: IGroupService
                 Id = g.Id,
                 Name = g.Name,
                 ImagePath = g.ImagePath,
-                NumberOfMembers = g.Members.Count
+                NumberOfMembers = g.Members.Count,
+                Balance = g.Members
+                    .Where(m => m.UserId == userId)
+                    .Select(m => m.Balance)
+                    .FirstOrDefault()
             })
             .FirstOrDefault();
         

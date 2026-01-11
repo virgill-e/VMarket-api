@@ -9,4 +9,6 @@ public class GroupDto
     public string ImagePath { get; set; }
     
     public int NumberOfMembers { get; set; }
+    
+    public float Balance { get; set; }
 }

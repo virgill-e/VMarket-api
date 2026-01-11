@@ -8,6 +8,8 @@ public class GroupMembership
     public string UserId { get; set; } = string.Empty;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public bool IsAdmin { get; set; } = false; // privilèges
+    
+    public float Balance { get; set; } = 100.00f;
 
     // Navigation properties
     public Group Group { get; set; } = null!;
