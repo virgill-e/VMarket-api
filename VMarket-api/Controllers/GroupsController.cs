@@ -43,5 +43,17 @@ namespace UserApi.Controllers;
             
             return Ok(result.Data);
         }
+
+        [HttpGet]
+        [Authorize]
+        [Route("{groupId}")]
+        public async Task<ActionResult> GetGroupById([FromRoute] string groupId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _groupService.GetGroupByIdAsync(userId, groupId);
+            if (!result.Success)
+                return BadRequest(new { Errors = result.Errors });
+            return Ok(result.Data);
+        }
     }
     

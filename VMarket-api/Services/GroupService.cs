@@ -73,6 +73,28 @@ public class GroupService: IGroupService
         
         return Task.FromResult(new ServiceResult(true, groups, null));
     }
+    
+    public Task<ServiceResult> GetGroupByIdAsync(string userId, string groupId)
+    {
+        if(!_db.GroupMemberships.Any(gm => gm.GroupId == groupId && gm.UserId == userId))
+            return Task.FromResult(new ServiceResult(false, null, new[] { "Accès refusé au groupe." }));
+        
+        var group = _db.Groups
+            .Where(g => g.Id == groupId)
+            .Select(g => new GroupDto 
+            { 
+                Id = g.Id,
+                Name = g.Name,
+                ImagePath = g.ImagePath,
+                NumberOfMembers = g.Members.Count
+            })
+            .FirstOrDefault();
+        
+        if (group == null)
+            return Task.FromResult(new ServiceResult(false, null, new[] { "Groupe non trouvé ou accès refusé." }));
+        
+        return Task.FromResult(new ServiceResult(true, group, null));
+    }
 
     private static bool IsValidImage(IFormFile file)
     {
